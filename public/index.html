@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>그노시아 게임</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <!-- 로비 화면 -->
+        <div id="lobby" class="screen active">
+            <div class="container">
+                <h1>그노시아 게임</h1>
+                
+                <div id="username-section">
+                    <input type="text" id="username-input" placeholder="닉네임을 입력하세요" maxlength="20">
+                    <button id="set-username-btn">확인</button>
+                </div>
+                
+                <div id="room-controls" class="hidden">
+                    <div class="control-group">
+                        <input type="text" id="room-name-input" placeholder="방 이름" maxlength="20">
+                        <select id="max-players">
+                            <option value="4">4인</option>
+                            <option value="5">5인</option>
+                            <option value="6">6인</option>
+                            <option value="7">7인</option>
+                            <option value="8" selected>8인</option>
+                        </select>
+                        <button id="create-room-btn">방 만들기</button>
+                    </div>
+                    
+                    <div class="room-list-section">
+                        <h3>방 목록</h3>
+                        <div id="room-list"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 대기실 화면 -->
+        <div id="waiting-room" class="screen">
+            <div class="container">
+                <h2 id="room-name-display"></h2>
+                <div id="player-list"></div>
+                <div id="waiting-controls">
+                    <button id="leave-room-btn">방 나가기</button>
+                    <button id="start-game-btn" class="host-only">게임 시작</button>
+                </div>
+                <div id="room-info">
+                    <p>호스트: <span id="host-name"></span></p>
+                    <p>인원: <span id="player-count">0</span>/<span id="max-player-count">8</span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 게임 화면 -->
+        <div id="game-screen" class="screen">
+            <div class="game-container">
+                <!-- 게임 정보 -->
+                <div class="game-header">
+                    <div id="game-info">
+                        <span id="day-info">Day 1</span>
+                        <span id="phase-info">토론 중</span>
+                    </div>
+                    <div id="role-info" class="hidden">
+                        당신의 역할: <span id="player-role"></span>
+                    </div>
+                </div>
+
+                <!-- 플레이어 목록 -->
+                <div class="players-section">
+                    <h3>플레이어 목록</h3>
+                    <div id="game-player-list"></div>
+                </div>
+
+                <!-- 채팅 영역 -->
+                <div class="chat-section">
+                    <div id="chat-messages"></div>
+                    <div class="chat-input">
+                        <input type="text" id="message-input" placeholder="메시지를 입력하세요..." maxlength="200">
+                        <button id="send-message-btn">전송</button>
+                    </div>
+                </div>
+
+                <!-- 게임 컨트롤 -->
+                <div class="game-controls">
+                    <button id="start-voting-btn" class="host-only hidden">투표 시작</button>
+                    <button id="leave-game-btn">게임 나가기</button>
+                </div>
+
+                <!-- 투표 모달 -->
+                <div id="voting-modal" class="modal hidden">
+                    <div class="modal-content">
+                        <h3>투표 - 제거할 플레이어를 선택하세요</h3>
+                        <div id="voting-options"></div>
+                        <button id="cancel-vote-btn">취소</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="client.js"></script>
+</body>
+</html>

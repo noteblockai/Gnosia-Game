@@ -1,0 +1,17 @@
+{
+  "name": "gnosia-game",
+  "version": "1.0.0",
+  "description": "그노시아 스타일 멀티플레이어 게임",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "dev": "nodemon server/server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.6.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22"
+  }
+}
