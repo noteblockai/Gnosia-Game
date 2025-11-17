@@ -163,8 +163,33 @@ class GnosiaGame {
         this.socket.on('error', (message) => {
             alert(message);
         });
+		
+		this.socket.on('playerEliminated', (data) => {
+            this.handlePlayerEliminated(data);
+        });
     }
 
+    handlePlayerEliminated(data) {
+        // 채팅 입력 비활성화
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-message-btn');
+        
+        messageInput.disabled = true;
+        messageInput.placeholder = '제거되어 채팅을 할 수 없습니다.';
+        sendButton.disabled = true;
+        
+        // 투표 버튼 숨기기 (호스트인 경우)
+        const voteBtn = document.getElementById('start-voting-btn');
+        if (voteBtn) {
+            voteBtn.style.display = 'none';
+        }
+        
+        this.displaySystemMessage(data.message);
+    }
+	
+	
+	
+	
     setUsername() {
         const usernameInput = document.getElementById('username-input');
         const username = usernameInput.value.trim();
@@ -278,6 +303,14 @@ class GnosiaGame {
     showGameScreen(data) {
         document.getElementById('waiting-room').classList.remove('active');
         document.getElementById('game-screen').classList.add('active');
+        
+        // 채팅 입력 활성화 (게임 시작 시 모든 플레이어는 활성 상태)
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-message-btn');
+        
+        messageInput.disabled = false;
+        messageInput.placeholder = '메시지를 입력하세요...';
+        sendButton.disabled = false;
         
         this.updateGameState(data);
         this.updateGamePlayerList(this.currentRoom.players);
@@ -406,6 +439,13 @@ class GnosiaGame {
         const eliminatedRole = data.eliminated.role === 'crew' ? '승무원' : '그노시아';
         
         this.displaySystemMessage(`${eliminatedName} 플레이어가 제거되었습니다. (역할: ${eliminatedRole})`);
+        
+        // 만약 제거된 플레이어가 자신이면 채팅 비활성화
+        if (data.eliminated.socketId === this.socket.id) {
+            this.handlePlayerEliminated({
+                message: '당신은 제거되었습니다. 더 이상 채팅이나 투표에 참여할 수 없습니다.'
+            });
+        }
         
         // 플레이어 목록 업데이트
         this.updateGamePlayerList(this.currentRoom.players);

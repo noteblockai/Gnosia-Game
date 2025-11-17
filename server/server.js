@@ -222,19 +222,27 @@ io.on('connection', (socket) => {
   });
 
   // 채팅 메시지
+// 채팅 메시지 핸들러 수정
   socket.on('sendMessage', (message) => {
     const player = players.get(socket.id);
     if (!player || !player.roomId) return;
-
+  
     const room = rooms.get(player.roomId);
     if (!room) return;
-
+  
+    // 제거된 플레이어 체크
+    const currentPlayer = room.players.find(p => p.socketId === socket.id);
+    if (!currentPlayer || !currentPlayer.isAlive) {
+      socket.emit('error', '제거된 플레이어는 채팅을 할 수 없습니다.');
+      return;
+    }
+  
     // 게임 상태에 따른 메시지 제한
-    if (room.gameState === 'night' && !player.isAlive) {
+    if (room.gameState === 'night') {
       socket.emit('error', '밤에는 채팅을 할 수 없습니다.');
       return;
     }
-
+  
     const chatMessage = {
       playerId: socket.id,
       username: player.username,
@@ -242,45 +250,45 @@ io.on('connection', (socket) => {
       timestamp: new Date().toLocaleTimeString(),
       isSystem: false
     };
-
+  
     io.to(room.id).emit('chatMessage', chatMessage);
   });
-
-  // 투표
+  
+  // 투표 결과 처리 부분 수정 - 제거된 플레이어에게 알림 추가
   socket.on('vote', (votedPlayerId) => {
     const player = players.get(socket.id);
     if (!player || !player.roomId) return;
-
+  
     const room = rooms.get(player.roomId);
     if (!room) return;
-
+  
     // 투표 가능 상태 확인
     if (room.gameState !== 'voting') {
       socket.emit('error', '지금은 투표 시간이 아닙니다.');
       return;
     }
-
+  
     const voter = room.players.find(p => p.socketId === socket.id);
     if (!voter || !voter.isAlive) {
       socket.emit('error', '제거된 플레이어는 투표할 수 없습니다.');
       return;
     }
-
+  
     // 투표 기록
     room.votes[socket.id] = votedPlayerId;
     socket.emit('voteSubmitted', { votedPlayerId });
-
+  
     // 모든 생존 플레이어가 투표했는지 확인
     const alivePlayers = room.players.filter(p => p.isAlive);
     const votedCount = Object.keys(room.votes).length;
-
+  
     if (votedCount === alivePlayers.length) {
       // 투표 집계
       const voteCounts = {};
       Object.values(room.votes).forEach(votedId => {
         voteCounts[votedId] = (voteCounts[votedId] || 0) + 1;
       });
-
+  
       // 최다 득표자 찾기
       let maxVotes = 0;
       let eliminatedId = null;
@@ -291,17 +299,22 @@ io.on('connection', (socket) => {
           eliminatedId = playerId;
         }
       });
-
+  
       // 동점 처리 (랜덤 제거)
       const topVoted = Object.entries(voteCounts).filter(([_, count]) => count === maxVotes);
       if (topVoted.length > 1) {
         eliminatedId = topVoted[Math.floor(Math.random() * topVoted.length)][0];
       }
-
+  
       // 제거 처리
       const eliminatedPlayer = room.players.find(p => p.socketId === eliminatedId);
       if (eliminatedPlayer) {
         eliminatedPlayer.isAlive = false;
+        
+        // 제거된 플레이어에게 알림
+        io.to(eliminatedPlayer.socketId).emit('playerEliminated', {
+          message: '당신은 제거되었습니다. 더 이상 채팅이나 투표에 참여할 수 없습니다.'
+        });
         
         // 결과 브로드캐스트
         io.to(room.id).emit('voteResult', {
@@ -312,7 +325,7 @@ io.on('connection', (socket) => {
           },
           voteCounts: voteCounts
         });
-
+  
         // 게임 종료 체크
         const alive = room.players.filter(p => p.isAlive);
         const aliveGnosia = alive.filter(p => p.role === 'gnosia');
@@ -320,7 +333,7 @@ io.on('connection', (socket) => {
         
         let gameEnded = false;
         let winner = null;
-
+  
         if (aliveGnosia.length === 0) {
           gameEnded = true;
           winner = 'crew';
@@ -328,7 +341,7 @@ io.on('connection', (socket) => {
           gameEnded = true;
           winner = 'gnosia';
         }
-
+  
         if (gameEnded) {
           io.to(room.id).emit('gameEnded', {
             winner: winner,

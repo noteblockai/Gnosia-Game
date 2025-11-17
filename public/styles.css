@@ -273,6 +273,23 @@ button:disabled {
     margin: 20px 0;
 }
 
+/* 비활성화된 입력 필드 스타일 */
+input:disabled {
+    background-color: #555;
+    color: #999;
+    cursor: not-allowed;
+}
+
+button:disabled {
+    background-color: #555;
+    color: #999;
+    cursor: not-allowed;
+}
+
+button:disabled:hover {
+    background-color: #555;
+}
+
 .voting-option {
     padding: 15px;
     margin: 10px 0;
